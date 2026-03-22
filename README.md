@@ -1,5 +1,7 @@
 # 📡 Telecom Lab – Mini Telco Core on Kubernetes
 
+![CI](https://github.com/marijan-madunic/telecom-lab/actions/workflows/ci.yml/badge.svg)
+
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![Flask](https://img.shields.io/badge/framework-flask-green)
 ![Docker](https://img.shields.io/badge/container-docker-blue)
