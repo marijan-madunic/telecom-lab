@@ -1,0 +1,55 @@
+name: Telecom Lab CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  python-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install flask redis requests
+
+      - name: Check AAA syntax
+        run: python -m py_compile aaa-service/app.py
+
+      - name: Check UDM syntax
+        run: python -m py_compile udm-service/app.py
+
+      - name: Check PCRF syntax
+        run: python -m py_compile pcrf-service/app.py
+
+      - name: Check OCS syntax
+        run: python -m py_compile ocs-service/app.py
+
+  docker-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build AAA image
+        run: docker build -t aaa-service ./aaa-service
+
+      - name: Build UDM image
+        run: docker build -t udm-service ./udm-service
+
+      - name: Build PCRF image
+        run: docker build -t pcrf-service ./pcrf-service
+
+      - name: Build OCS image
+        run: docker build -t ocs-service ./ocs-service
