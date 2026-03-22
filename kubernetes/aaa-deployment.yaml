@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aaa-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aaa-service
+  template:
+    metadata:
+      labels:
+        app: aaa-service
+    spec:
+      containers:
+      - name: aaa-service
+        image: aaa-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: REDIS_HOST
+          value: "redis"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: UDM_URL
+          value: "http://udm-service:8082"
+        - name: OCS_URL
+          value: "http://ocs-service:8083"
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 3

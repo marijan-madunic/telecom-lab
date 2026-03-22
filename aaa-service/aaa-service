@@ -1,0 +1,40 @@
+from flask import Flask, jsonify
+import redis
+import os
+
+app = Flask(__name__)
+
+# Konfiguracija Redis-a
+REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
+REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+
+# Mock fallback podaci ako subscriber ne postoji u Redis-u
+MOCK_SUBSCRIBERS = {
+    "001010000000001": {"imsi": "001010000000001", "plan": "gold", "speed": "1Gbps", "policy": "premium"},
+    "001010000000002": {"imsi": "001010000000002", "plan": "silver", "speed": "500Mbps", "policy": "basic"},
+}
+
+@app.route("/auth/<imsi>", methods=["GET"])
+def auth(imsi):
+    # Provjeri u Redis cache-u
+    cached = r.hgetall(imsi)
+    if cached:
+        response = cached
+        response["auth"] = "granted"
+        return jsonify(response)
+
+    # Ako nije u Redis-u, fallback na mock podatke
+    subscriber = MOCK_SUBSCRIBERS.get(imsi)
+    if subscriber:
+        # Spremi u Redis za sljedeći put
+        r.hset(imsi, mapping=subscriber)
+        response = subscriber.copy()
+        response["auth"] = "granted"
+        return jsonify(response)
+
+    # Ako nema ni u Redis ni u mocku
+    return jsonify({"error": "subscriber not found"}), 404
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)

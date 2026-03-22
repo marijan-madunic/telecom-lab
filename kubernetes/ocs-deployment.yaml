@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ocs-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ocs-service
+  template:
+    metadata:
+      labels:
+        app: ocs-service
+    spec:
+      containers:
+      - name: ocs-service
+        image: ocs-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8083
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8083
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8083
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 3

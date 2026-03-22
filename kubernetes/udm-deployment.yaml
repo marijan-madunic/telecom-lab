@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: udm-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: udm-service
+  template:
+    metadata:
+      labels:
+        app: udm-service
+    spec:
+      containers:
+      - name: udm-service
+        image: udm-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8082
+
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8082
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8082
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 3
