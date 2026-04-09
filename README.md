@@ -1,78 +1,147 @@
 # 📡 Telecom Lab – Mini Telco Core on Kubernetes
 
-![CI](https://github.com/marijan-madunic/telecom-lab/actions/workflows/ci.yml/badge.svg)
+![CI](https://img.shields.io/badge/CI-passing-brightgreen)
+![Python](https://img.shields.io/badge/Python-3.x-blue)
+![Flask](https://img.shields.io/badge/Flask-microservice-black)
+![Docker](https://img.shields.io/badge/Docker-containerized-blue)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-orchestrated-326CE5)
+![Redis](https://img.shields.io/badge/Redis-cache-red)
 
-![Python](https://img.shields.io/badge/python-3.11-blue)
-![Flask](https://img.shields.io/badge/framework-flask-green)
-![Docker](https://img.shields.io/badge/container-docker-blue)
-![Kubernetes](https://img.shields.io/badge/orchestration-kubernetes-blue)
-![Redis](https://img.shields.io/badge/cache-redis-red)
-![Status](https://img.shields.io/badge/status-learning%20project-orange)
+A mini telecom core simulation built with Python microservices and Kubernetes.
+The project demonstrates core telecom concepts such as subscriber authentication, policy control, charging, caching, and cloud-native deployment.
 
+---
 
-📡 Telecom Lab – Mini Telco Core on Kubernetes
+# Project Overview
 
-Mini telecom core simulation napravljen s Python mikroservisima i Kubernetesom.
-Projekt simulira osnovne komponente mobilne mreže poput AAA, UDM, PCRF i OCS.
+This lab simulates a simplified telecom core using the following components:
 
-Cilj projekta je demonstrirati:
+* **AAA** – authentication, orchestration, and roaming logic
+* **UDM** – subscriber database simulation
+* **PCRF** – policy decision engine
+* **OCS** – online charging and balance check
+* **Redis** – cache layer for faster responses
 
-mikroservisnu arhitekturu
-telco policy logiku
-charging / balance check
-caching
-Kubernetes deployment
-self-healing infrastrukturu
+The system is implemented as **containerized microservices** deployed on **Kubernetes**.
 
-🧩 Arhitektura
+---
+
+# Project Goals
+
+The goal of this project is to demonstrate:
+
+* microservice-based telecom architecture
+* subscriber authentication and orchestration logic
+* policy control and charging workflow
+* Redis-based caching
+* Kubernetes deployment and self-healing behavior
+
+This project is intended as a **learning lab for telecom core concepts and cloud-native infrastructure**.
+
+---
+
+# Architecture
+
+```
 Client
-  │
-  ▼
+  |
+  v
 AAA Service
-  │
-  ├── UDM  → subscriber data (plan, roaming)
-  │
-  ├── PCRF → policy decision
-  │
-  ├── OCS  → balance / charging
-  │
-  └── Redis → cache
-  
-⚙️ Servisi
-Service	Description
-AAA	Authentication, orchestration, roaming logic
-UDM	Subscriber database simulator
-PCRF	Policy decision engine
-OCS	Online charging system (balance check)
-Redis	Cache layer
-🚀 Tehnologije
-Python (Flask)
-Redis
-Docker
-Kubernetes
-Minikube
+  |-- UDM   -> subscriber data (plan, roaming status)
+  |-- PCRF  -> policy decision
+  |-- OCS   -> balance / charging
+  \-- Redis -> cache
+```
 
+The **AAA service** acts as the orchestration layer coordinating all other services.
 
-🔎 AAA Flow
+---
 
-1️⃣ Client šalje zahtjev
+## Architecture Diagram
 
+```mermaid
+flowchart LR
+
+    Client[Client / API Request]
+
+    AAA[AAA Service]
+
+    Redis[(Redis Cache)]
+
+    UDM[UDM Service\nSubscriber Data]
+
+    PCRF[PCRF Service\nPolicy Control]
+
+    OCS[OCS Service\nCharging System]
+
+    Client -->|Auth Request| AAA
+
+    AAA -->|Check Cache| Redis
+    Redis -->|Cache Hit| AAA
+
+    AAA -->|Subscriber Data| UDM
+    AAA -->|Policy Request| PCRF
+    AAA -->|Balance Check| OCS
+
+    UDM --> AAA
+    PCRF --> AAA
+    OCS --> AAA
+
+    AAA -->|Final Response| Client
+```
+
+# Services
+
+| Service | Description                                                                            |
+| ------- | -------------------------------------------------------------------------------------- |
+| AAA     | Main orchestration service for authentication, roaming logic, and response aggregation |
+| UDM     | Subscriber data simulator                                                              |
+| PCRF    | Policy decision engine                                                                 |
+| OCS     | Online charging system for balance checks                                              |
+| Redis   | Cache layer used by AAA                                                                |
+
+---
+
+# Technologies Used
+
+* Python
+* Flask
+* Redis
+* Docker
+* Kubernetes
+* Minikube
+
+---
+
+# AAA Flow
+
+1. The client sends an authentication request:
+
+```
 GET /auth/<IMSI>
+```
 
-2️⃣ AAA provjerava Redis cache
+Example:
 
-3️⃣ Ako nema cache:
-
-AAA zove:
-
-UDM → subscriber data
-PCRF → policy
-OCS → balance
-
-4️⃣ AAA vraća finalni odgovor.
-
-🧪 Primjer odgovora
+```
 curl http://AAA/auth/001010000000001
+```
+
+2. AAA first checks the Redis cache.
+
+3. If the data is not cached, AAA calls:
+
+* **UDM** for subscriber data
+* **PCRF** for policy decision
+* **OCS** for balance information
+
+4. AAA builds the final response and returns it to the client.
+
+---
+
+# Example Response
+
+```
 {
   "auth": "granted",
   "balance": 900,
@@ -82,73 +151,121 @@ curl http://AAA/auth/001010000000001
   "policy": "premium",
   "source": "udm"
 }
-🌍 Roaming logika
+```
 
-Ako je subscriber u roamingu:
+---
 
-gold → silver
-silver → bronze
+# Roaming Logic
 
-PCRF zatim dodjeljuje policy za novi plan.
+If a subscriber is roaming, the service plan is downgraded:
 
-🧠 Cache
+* gold → silver
+* silver → bronze
 
-AAA koristi Redis TTL cache.
+After that, **PCRF assigns a policy based on the adjusted plan**.
 
-Primjer:
+---
 
-source: udm
+# Cache Behaviour
 
-sljedeći request:
+AAA uses Redis caching with TTL.
 
-source: cache
+Example behaviour:
 
-❤️ Kubernetes
+First request:
 
-Svaki servis ima:
+```
+"source": "udm"
+```
 
-Deployment
-Service
-Health endpoint
-Liveness probe
-Readiness probe
+Next request:
 
-Kubernetes automatski radi:
+```
+"source": "cache"
+```
 
-restart podova
-self healing
-rolling updates
+This reduces service calls and improves response time.
 
-📊 Primjer logova
-Cache MISS → calling UDM
+---
+
+# Kubernetes Features
+
+Each microservice includes:
+
+* Deployment
+* Service
+* Health endpoint
+* Liveness probe
+* Readiness probe
+
+Kubernetes automatically provides:
+
+* self-healing
+* pod restart
+* rolling updates
+* service discovery
+
+---
+
+# Example Logs
+
+Cache miss scenario:
+
+```
+Cache MISS -> calling UDM
 Calling PCRF
 Calling OCS
+```
 
-ili
+Cached response:
 
+```
 Cache HIT
+```
 
-🛠 Pokretanje projekta
+---
+
+# Running the Project
+
+Start Minikube:
+
+```
 minikube start
 eval $(minikube docker-env)
+```
 
-build image-a:
+Build Docker images:
 
+```
 docker build -t aaa-service .
 docker build -t udm-service .
 docker build -t pcrf-service .
 docker build -t ocs-service .
+```
 
-deploy:
+Deploy to Kubernetes:
 
+```
 kubectl apply -f kubernetes/
+```
 
-🔮 Sljedeći koraci
-CI/CD pipeline
-usage tracking
-throttling
-observability (Prometheus/Grafana)
-distributed tracing
-📚 Projektni cilj
+---
 
-Projekt demonstrira kako telco core logika može biti implementirana kao cloud-native mikroservisi na Kubernetesu.
+# Future Improvements
+
+Planned next steps:
+
+* CI/CD pipeline
+* traffic simulation
+* usage tracking
+* throttling
+* observability with Prometheus and Grafana
+* distributed tracing
+
+---
+
+# Project Purpose
+
+This project demonstrates how **telecom core logic can be implemented using cloud-native microservices running on Kubernetes**.
+
+It serves as a **practical learning lab combining telecom concepts with modern DevOps and cloud technologies**.
