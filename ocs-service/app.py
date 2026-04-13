@@ -6,14 +6,21 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# 💰 Simulirani balance (u MB ili “kreditima”)
+# Simulirani balance (u MB ili “kreditima”)
 BALANCES = {
-    "001010000000001": 1000,
-    "001010000000002": 200,
+    "001010000000001": 10000,
+    "001010000000002": 2000,
     "001010000000003": 0,   # nema kredita
+    "001010000000004": 3000,
+    "001010000000005": 4000,
+    "001010000000006": 5000,
+    "001010000000007": 6000,
+    "001010000000008": 7000,
+    "001010000000009": 10000,
+    "001010000000010": 10000,
 }
 
-# 📊 koliko trošimo po requestu
+# koliko trošimo po requestu
 USAGE_PER_REQUEST = 100
 
 @app.route("/health")

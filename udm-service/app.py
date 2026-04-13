@@ -8,6 +8,14 @@ SUBSCRIBERS = {
     "001010000000002": {"plan": "gold", "is_roaming": True},
     "001010000000003": {"plan": "silver", "is_roaming": False},
     "001010000000004": {"plan": "bronze", "is_roaming": True},
+
+    "001010000000005": {"plan": "gold", "is_roaming": False},
+    "001010000000006": {"plan": "silver", "is_roaming": True},
+    "001010000000007": {"plan": "bronze", "is_roaming": False},
+
+    "001010000000008": {"plan": "gold", "is_roaming": False},
+    "001010000000009": {"plan": "silver", "is_roaming": False},
+    "001010000000010": {"plan": "bronze", "is_roaming": True},
 }
 
 @app.route("/health")

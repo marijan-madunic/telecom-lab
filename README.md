@@ -249,6 +249,32 @@ kubectl apply -f kubernetes/
 
 ---
 
+### Monitoring
+
+The telecom lab includes a full observability stack:
+
+- Prometheus
+- Grafana
+- Alertmanager
+
+Prometheus collects metrics from Kubernetes nodes and services,
+while Grafana provides visualization dashboards for infrastructure
+and telecom service metrics.
+
+## Monitoring
+
+The telecom lab includes a full observability stack using Prometheus and Grafana.
+
+Prometheus collects metrics from Kubernetes nodes and telecom services,
+while Grafana visualizes infrastructure and application performance.
+
+
+Example Kubernetes monitoring dashboard:
+
+![Grafana Dashboard](docs/grafana-kubernetes-dashboard.png)
+
+---
+
 ## 🔮 Future Improvements
 
 Planned next steps:

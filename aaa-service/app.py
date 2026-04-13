@@ -4,8 +4,29 @@ import redis
 import requests
 import logging
 from flask import Flask, jsonify
+from prometheus_client import Counter, start_http_server
 
 app = Flask(__name__)
+
+aaa_requests_total = Counter(
+    "aaa_requests_total",
+    "Total AAA authentication requests"
+)
+
+aaa_auth_granted_total = Counter(
+    "aaa_auth_granted_total",
+    "Total granted AAA authentications"
+)
+
+aaa_auth_denied_total = Counter(
+    "aaa_auth_denied_total",
+    "Total denied AAA authentications"
+)
+
+aaa_auth_errors_total = Counter(
+    "aaa_auth_errors_total",
+    "Total AAA authentication errors"
+)
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -36,8 +57,10 @@ def health():
 
 @app.route("/auth/<imsi>", methods=["GET"])
 def auth(imsi):
+    aaa_requests_total.inc()
     try:
         if imsi in BLACKLIST:
+            aaa_auth_denied_total.inc()
             logger.warning(f"BLOCKED IMSI {imsi}")
             return jsonify({"imsi": imsi, "auth": "denied", "reason": "blacklisted"}), 403
 
@@ -95,7 +118,7 @@ def auth(imsi):
 
             source = "udm"
 
-        # 🔥 OCS UVIJEK ide (izvan cache-a!)
+        # !! OCS UVIJEK ide (izvan cache-a!)
         try:
             logger.info(f"Calling OCS for {imsi}")
             ocs_resp = requests.get(f"{OCS_URL}/check/{imsi}", timeout=2)
@@ -104,6 +127,7 @@ def auth(imsi):
                 ocs_data = ocs_resp.json()
 
                 if not ocs_data.get("allowed", False):
+                    aaa_auth_denied_total.inc()
                     logger.warning(f"No balance for {imsi}")
                     return jsonify({
                         "imsi": imsi,
@@ -123,9 +147,11 @@ def auth(imsi):
         data["auth"] = "granted"
         data["source"] = source
 
+        aaa_auth_granted_total.inc()
         return jsonify(data)
 
     except Exception as e:
+        aaa_auth_errors_total.inc()
         logger.error(f"AAA ERROR: {e}")
         return jsonify({"error": str(e)}), 500
 
@@ -135,4 +161,5 @@ def home():
     return jsonify({"status": "AAA running"})
 
 if __name__ == "__main__":
+    start_http_server(8000)
     app.run(host="0.0.0.0", port=8080)
