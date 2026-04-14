@@ -60,6 +60,7 @@ flowchart LR
     UDM[UDM Service<br/>Subscriber Data]
     PCRF[PCRF Service<br/>Policy Control]
     OCS[OCS Service<br/>Charging System]
+    SMSC[SMSC Service]
 
     Client -->|Auth Request| AAA
 
@@ -75,6 +76,8 @@ flowchart LR
     OCS -->|Balance Result| AAA
 
     AAA -->|Final Response| Client
+    Client -->|Send SMS| SMSC
+    SMSC -->|Store / Retrieve| Redis
 ```
 
 This diagram represents a simplified telecom control-plane flow where the **AAA service orchestrates authentication, policy control, charging, and caching**.
@@ -89,7 +92,45 @@ This diagram represents a simplified telecom control-plane flow where the **AAA 
 | UDM     | Subscriber database simulator                   |
 | PCRF    | Policy decision engine                          |
 | OCS     | Online charging system (balance check)          |
+| SMSC    | SMS messaging service with delivery tracking    |
 | Redis   | Cache layer used by AAA                         |
+
+
+---
+
+## 📩 SMSC Service
+
+The project includes a simplified **SMSC (Short Message Service Center)** microservice for SMS handling and delivery simulation.
+
+### Features
+- Send SMS messages via REST API
+- Store messages in Redis
+- Track delivery status (DELIVERED / FAILED)
+- Retrieve subscriber inbox
+- Prometheus metrics for observability
+
+<details>
+<summary><b>Show API examples</b></summary>
+
+### Send SMS
+```bash
+curl -X POST http://localhost:8082/send_sms \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from": "385911111111",
+    "to": "385922222222",
+    "text": "Hello from telecom-lab"
+  }'
+
+### Check SMS status
+curl http://localhost:8082/sms/<message_id>/status
+
+### Read inbox
+curl http://localhost:8082/messages/385922222222
+
+### Health check
+curl http://localhost:8082/health
+</details> ```
 
 ---
 
@@ -285,7 +326,7 @@ Planned next steps:
 * throttling
 * observability with Prometheus and Grafana
 * distributed tracing
-* additional telecom components (SMSC, future 5G extensions such as PCF)
+* additional telecom components (future 5G extensions such as PCF)
 
 
 Already implemented:
@@ -297,6 +338,7 @@ Already implemented:
 - Redis caching layer
 - Prometheus metrics and Grafana dashboards
 - traffic simulation for real-time monitoring
+* Short Message Service Center (SMSC)
 
 ---
 

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smsc-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smsc
+  template:
+    metadata:
+      labels:
+        app: smsc
+    spec:
+      containers:
+        - name: smsc
+          image: smsc-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 8001
+              name: metrics
+          env:
+            - name: REDIS_HOST
+              value: redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: SMSC_HTTP_PORT
+              value: "8080"
+            - name: SMSC_METRICS_PORT
+              value: "8001"
