@@ -285,6 +285,18 @@ Planned next steps:
 * throttling
 * observability with Prometheus and Grafana
 * distributed tracing
+* additional telecom components (SMSC, future 5G extensions such as PCF)
+
+
+Already implemented:
+
+- Kubernetes-based microservices architecture
+- AAA authentication flow
+- policy control (PCRF)
+- balance check (OCS)
+- Redis caching layer
+- Prometheus metrics and Grafana dashboards
+- traffic simulation for real-time monitoring
 
 ---
 
