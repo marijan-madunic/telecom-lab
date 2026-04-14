@@ -121,19 +121,19 @@ curl -X POST http://localhost:8082/send_sms \
     "to": "385922222222",
     "text": "Hello from telecom-lab"
   }'
-
+```
 ### Check SMS status
 ```bash
 curl http://localhost:8082/sms/<message_id>/status
-
+```
 ### Read inbox
 ```bash
 curl http://localhost:8082/messages/385922222222
-
+```
 ### Health check
 ```bash
 curl http://localhost:8082/health
-
+```
 </details> 
 
 ---
