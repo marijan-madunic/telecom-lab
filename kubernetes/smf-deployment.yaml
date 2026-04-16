@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smf-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smf-service
+  template:
+    metadata:
+      labels:
+        app: smf-service
+    spec:
+      containers:
+        - name: smf-service
+          image: smf-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8083
+            - containerPort: 8001
+          env:
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: UDM_URL
+              value: "http://udm-service:8082"
+            - name: SMF_METRICS_PORT
+              value: "8001"
+            - name: IP_POOL_SUBNET
+              value: "10.20.0.0/24"
