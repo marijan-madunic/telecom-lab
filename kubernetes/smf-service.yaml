@@ -11,5 +11,5 @@ spec:
       port: 8083
       targetPort: 8083
     - name: metrics
-      port: 8001
-      targetPort: 8001
+      port: 8003
+      targetPort: 8003

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pcf-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pcf-service
+  template:
+    metadata:
+      labels:
+        app: pcf-service
+    spec:
+      containers:
+        - name: pcf-service
+          image: pcf-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8084
+            - containerPort: 8004
+          env:
+            - name: METRICS_PORT
+              value: "8004"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pcf-service
+spec:
+  selector:
+    app: pcf-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8084
+      targetPort: 8084
+    - name: metrics
+      protocol: TCP
+      port: 8004
+      targetPort: 8004
+  type: ClusterIP

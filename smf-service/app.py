@@ -16,8 +16,9 @@ logging.basicConfig(level=logging.INFO)
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 UDM_URL = os.getenv("UDM_URL", "http://udm-service:8081")
-SMF_METRICS_PORT = int(os.getenv("SMF_METRICS_PORT", "8001"))
+SMF_METRICS_PORT = int(os.getenv("SMF_METRICS_PORT", "8003"))
 IP_POOL_SUBNET = os.getenv("IP_POOL_SUBNET", "10.20.0.0/24")
+PCF_URL = os.getenv("PCF_URL", "http://pcf-service:8084")
 
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 
@@ -84,19 +85,51 @@ def get_subscriber_from_udm(imsi: str) -> Optional[Dict[str, Any]]:
         app.logger.error("UDM request failed: %s", exc)
         return None
 
+def get_policy_from_pcf(imsi: str, dnn: str, s_nssai: str) -> Optional[Dict[str, Any]]:
+    """
+    Request policy decision from PCF.
+    Example assumption:
+      POST /policy
+    """
+    try:
+        response = requests.post(
+            f"{PCF_URL}/policy",
+            json={
+                "imsi": imsi,
+                "session_type": "data",
+                "dnn": dnn,
+                "slice": s_nssai,
+                "location": "HR"
+            },
+            timeout=3
+        )
+
+        if response.status_code == 200:
+            return response.json()
+
+        app.logger.warning("PCF denied or failed for IMSI %s: %s %s", imsi, response.status_code, response.text)
+        return None
+
+    except requests.RequestException as exc:
+        app.logger.error("PCF request failed: %s", exc)
+        return None
 
 def build_session_payload(
     imsi: str,
     dnn: str,
     s_nssai: str,
     ip_address: str,
-    subscriber: Optional[Dict[str, Any]]
+    subscriber: Optional[Dict[str, Any]],
+    policy: Optional[Dict[str, Any]]
 ) -> Dict[str, Any]:
     session_id = f"sess-{uuid.uuid4().hex[:12]}"
     qos_profile = "default"
 
     if subscriber:
         qos_profile = subscriber.get("plan", "default")
+
+    if policy and policy.get("qos"):
+        qos_profile = policy.get("qos")
 
     return {
         "session_id": session_id,
@@ -105,9 +138,9 @@ def build_session_payload(
         "s_nssai": s_nssai,
         "ip_address": ip_address,
         "qos_profile": qos_profile,
-        "status": "active"
+        "status": "active",
+        "policy": policy or {}
     }
-
 
 @app.route("/health", methods=["GET"])
 def health() -> Any:
@@ -138,8 +171,20 @@ def create_session() -> Any:
             smf_session_create_fail_total.inc()
             return jsonify({"error": f"DNN '{dnn}' not allowed for subscriber"}), 403
 
+        policy = get_policy_from_pcf(imsi, dnn, s_nssai)
+        if not policy:
+            smf_session_create_fail_total.inc()
+            return jsonify({"error": "Policy decision failed or subscriber denied by PCF"}), 403
+
+        if not policy.get("allowed", False):
+            smf_session_create_fail_total.inc()
+            return jsonify({
+                "error": "Subscriber denied by PCF",
+                "policy": policy
+            }), 403
+
         ip_address = allocate_fake_ip()
-        session = build_session_payload(imsi, dnn, s_nssai, ip_address, subscriber)
+        session = build_session_payload(imsi, dnn, s_nssai, ip_address, subscriber, policy)
 
         redis_client.set(
             f"smf:session:{session['session_id']}",
