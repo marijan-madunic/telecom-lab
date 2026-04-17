@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: ocs-service
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: ocs-service
   ports:

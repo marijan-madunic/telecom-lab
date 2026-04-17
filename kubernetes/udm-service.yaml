@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: udm-service
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: udm-service
   ports:

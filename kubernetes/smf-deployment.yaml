@@ -18,7 +18,7 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8083
-            - containerPort: 8001
+            - containerPort: 8003
           env:
             - name: REDIS_HOST
               value: "redis"
@@ -26,7 +26,9 @@ spec:
               value: "6379"
             - name: UDM_URL
               value: "http://udm-service:8082"
+            - name: PCF_URL
+              value: "http://pcf-service:8084"
             - name: SMF_METRICS_PORT
-              value: "8001"
+              value: "8003"
             - name: IP_POOL_SUBNET
               value: "10.20.0.0/24"
