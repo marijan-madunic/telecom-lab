@@ -1,0 +1,48 @@
+name: bgp-lab
+
+topology:
+  nodes:
+    r1:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - ./configs/r1-frr.conf:/etc/frr/frr.conf
+        - ./configs/r1-daemons:/etc/frr/daemons
+      exec:
+        - ip addr add 10.0.12.1/30 dev eth1
+        - ip addr add 192.168.1.1/24 dev eth2
+        - /usr/lib/frr/docker-start
+
+    r2:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - ./configs/r2-frr.conf:/etc/frr/frr.conf
+        - ./configs/r2-daemons:/etc/frr/daemons
+      exec:
+        - ip addr add 10.0.12.2/30 dev eth1
+        - ip addr add 192.168.2.1/24 dev eth2
+        - /usr/lib/frr/docker-start
+
+    pc1:
+      kind: linux
+      image: alpine:latest
+      exec:
+        - ip addr add 192.168.1.10/24 dev eth1
+        - ip route del default
+        - ip route add default via 192.168.1.1 dev eth1
+        - sh -c "while true; do sleep 3600; done"
+
+    pc2:
+      kind: linux
+      image: alpine:latest
+      exec:
+        - ip addr add 192.168.2.10/24 dev eth1
+        - ip route del default
+        - ip route add default via 192.168.2.1 dev eth1
+        - sh -c "while true; do sleep 3600; done"
+
+  links:
+    - endpoints: ["r1:eth1", "r2:eth1"]
+    - endpoints: ["r1:eth2", "pc1:eth1"]
+    - endpoints: ["r2:eth2", "pc2:eth1"]
