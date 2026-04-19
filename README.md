@@ -1,4 +1,4 @@
-📡 Telecom Lab – Cloud-Native 5G Core Simulation
+# 📡 Telecom Lab – Cloud-Native 5G Core Simulation
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue)
 ![Flask](https://img.shields.io/badge/Flask-microservice-black)
@@ -8,10 +8,11 @@
 
 A cloud-native telecom core simulation built with microservices and Kubernetes, demonstrating real-world 4G/5G control-plane concepts including authentication, session orchestration, policy control, charging, and observability.
 
-🎯 Project Overview
+---
 
-This project simulates a simplified telecom core network using modern cloud-native architecture.
+## 🎯 Project Overview
 
+This project simulates a cloud-native telecom core network, demonstrating real-world 4G/5G control-plane workflows such as authentication, session orchestration, policy control, charging, and observability.
 It combines:
 
 telecom domain knowledge (AAA, AMF, SMF, policy, charging)
@@ -19,10 +20,13 @@ microservices design
 Kubernetes orchestration
 observability (Prometheus + Grafana)
 
-🧩 Architecture
+---
+
+## 🧩 Architecture
 
 ```mermaid
 graph TD
+
     UE[UE / Client] --> AAA
     UE --> AMF
 
@@ -43,26 +47,31 @@ graph TD
     Grafana --> Prometheus
 ```
 
-⚙️ Services
+## ⚙️ Services
 
 Service	Description
-AAA	Authentication and orchestration (legacy / 4G-style flow)
-AMF	5G Access & Mobility Management (registration + orchestration)
-SMF	Session Management (PDU session handling)
-AUSF	Authentication Server Function
-UDM	Subscriber database simulator
-PCRF	Policy control (4G-style)
-PCF	Policy control (5G-style)
-OCS	Online charging system
-SMSC	SMS handling and delivery tracking
-Redis	Cache and session storage
+| Service | Description                                                    |
+|---------|----------------------------------------------------------------|
+|   AAA   | Authentication and orchestration (legacy / 4G-style flow)      |
+|   AMF   | 5G Access & Mobility Management (registration + orchestration) |
+|   SMF   | Session Management (PDU session handling)                      |
+|   AUSF  | Authentication Server Function                                 |
+|   UDM   | Subscriber database simulator                                  |
+|   PCRF  | Policy control (4G-style)                                      |
+|   PCF   | Policy control (5G-style)                                      |
+|   OCS   | Online charging system                                         |
+|   SMSC  | SMS handling and delivery tracking                             |
+|  Redis  | Cache and session storage                                      |
 
-🔁 Core Flows
+---
+
+## 🔁 Core Flows
 
 1️⃣ UE Registration (5G AMF Flow)
 
 ```mermaid
 sequenceDiagram
+
     participant UE
     participant AMF
     participant AUSF
@@ -83,6 +92,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
+
     participant UE
     participant AMF
     participant SMF
@@ -102,7 +112,9 @@ sequenceDiagram
     AMF-->>UE: PDU established
 ```	
 
-📊 Observability (Prometheus + Grafana)
+---
+
+## 📊 Observability (Prometheus + Grafana)
 
 The project includes full observability using Prometheus and Grafana.
 
@@ -131,7 +143,7 @@ policy assignment
 charging validation
 caching with Redis
 
-🧠 Key Features
+##🧠 Key Features
 Microservice-based telecom architecture
 4G + 5G hybrid control-plane simulation
 Redis-based session and cache management
@@ -139,22 +151,25 @@ Kubernetes deployments with self-healing
 Prometheus metrics + Grafana dashboards
 Realistic telecom flows (registration + PDU session)
 
-❤️ Kubernetes
+##❤️ Kubernetes
 
 Each service includes:
 
-Deployment
-Service
-Health endpoint
-Liveness & Readiness probes
+- Deployment
+- Service
+- Health endpoint
+- Liveness & Readiness probes
 
 Kubernetes provides:
 
-self-healing pods
-rolling updates
-service discovery
+- self-healing pods
+- rolling updates
+- service discovery
 
-🛠 Running the Project
+---
+
+##🛠 Running the Project
+
 ```bash
 minikube start
 eval $(minikube docker-env)
@@ -175,17 +190,23 @@ kubectl apply -R -f kubernetes/
 📈 Monitoring
 ```bash
 kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090:9090
+```
+```bash
 kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
+```
+```bash
 Prometheus → http://localhost:9090
+```
+```bash
 Grafana → http://localhost:3000
 ```
 
-🔮 Future Improvements
-CI/CD pipeline
-distributed tracing
-SMF observability
-traffic generator
-full 5G core expansion (NRF, NSSF…)
+##🔮 Future Improvements
+- CI/CD pipeline
+- distributed tracing
+- SMF observability
+- traffic generator
+- full 5G core expansion (NRF, NSSF…)
 
 👨‍💻 Author
 
