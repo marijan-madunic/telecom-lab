@@ -119,17 +119,17 @@ sequenceDiagram
 The project includes full observability using Prometheus and Grafana.
 
 AMF Metrics
-amf_registrations_total
-amf_pdu_sessions_created_total
-amf_auth_failures_total
-amf_errors_total
-amf_register_requests_total
-amf_pdu_session_requests_total
+- amf_registrations_total
+- amf_pdu_sessions_created_total
+- amf_auth_failures_total
+- amf_errors_total
+- amf_register_requests_total
+- amf_pdu_session_requests_total
 
 Dashboard Features
-KPI overview (registrations, sessions, errors)
-Real-time traffic monitoring
-Health indicators (failures, errors)
+- KPI overview (registrations, sessions, errors)
+- Real-time traffic monitoring
+- Health indicators (failures, errors)
 
 Example Dashboard
 🟢 Healthy system → 0 errors
@@ -138,20 +138,21 @@ Example Dashboard
 🔎 AAA Flow (Legacy Control Plane)
 
 Client → AAA → UDM / PCRF / OCS → Redis
-subscriber authentication
-policy assignment
-charging validation
-caching with Redis
 
-##🧠 Key Features
-Microservice-based telecom architecture
-4G + 5G hybrid control-plane simulation
-Redis-based session and cache management
-Kubernetes deployments with self-healing
-Prometheus metrics + Grafana dashboards
-Realistic telecom flows (registration + PDU session)
+- subscriber authentication
+- policy assignment
+- charging validation
+- caching with Redis
 
-##❤️ Kubernetes
+## 🧠 Key Features
+- Microservice-based telecom architecture
+- 4G + 5G hybrid control-plane simulation
+- Redis-based session and cache management
+- Kubernetes deployments with self-healing
+- Prometheus metrics + Grafana dashboards
+- Realistic telecom flows (registration + PDU session)
+
+## ❤️ Kubernetes
 
 Each service includes:
 
@@ -194,19 +195,21 @@ kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 909
 ```bash
 kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
 ```
-```bash
-Prometheus → http://localhost:9090
-```
-```bash
-Grafana → http://localhost:3000
-```
 
-##🔮 Future Improvements
+Prometheus → http://localhost:9090
+
+Grafana → http://localhost:3000
+
+
+## 🔮 Future Improvements
+
 - CI/CD pipeline
 - distributed tracing
 - SMF observability
 - traffic generator
 - full 5G core expansion (NRF, NSSF…)
+
+---
 
 👨‍💻 Author
 
