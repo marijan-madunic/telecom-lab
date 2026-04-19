@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ausf-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ausf-service
+  template:
+    metadata:
+      labels:
+        app: ausf-service
+    spec:
+      containers:
+        - name: ausf-service
+          image: ausf-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8085

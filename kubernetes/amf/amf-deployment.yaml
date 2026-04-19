@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amf-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: amf-service
+  template:
+    metadata:
+      labels:
+        app: amf-service
+    spec:
+      containers:
+        - name: amf-service
+          image: amf-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8086
+            - containerPort: 8006
+          env:
+            - name: AUSF_URL
+              value: "http://ausf-service:8085"
+            - name: SMF_URL
+              value: "http://smf-service:8083"
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: SESSION_TTL
+              value: "3600"
