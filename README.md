@@ -6,6 +6,9 @@
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-orchestrated-326CE5)
 ![Redis](https://img.shields.io/badge/Redis-cache-red)
 
+![GitHub repo size](https://img.shields.io/github/repo-size/marijan-madunic/telecom-lab)
+![GitHub last commit](https://img.shields.io/github/last-commit/marijan-madunic/telecom-lab)
+
 A cloud-native telecom core simulation built with microservices and Kubernetes, demonstrating real-world 4G/5G control-plane concepts including authentication, session orchestration, policy control, charging, and observability.
 
 ---
@@ -15,10 +18,23 @@ A cloud-native telecom core simulation built with microservices and Kubernetes, 
 This project simulates a cloud-native telecom core network, demonstrating real-world 4G/5G control-plane workflows such as authentication, session orchestration, policy control, charging, and observability.
 It combines:
 
-telecom domain knowledge (AAA, AMF, SMF, policy, charging)
-microservices design
-Kubernetes orchestration
-observability (Prometheus + Grafana)
+- Telecom domain knowledge across 4G/5G control-plane architecture:
+  - 5G core functions: AMF, SMF, AUSF, UDM, PCF
+  - 4G/legacy components: AAA, PCRF, OCS
+  - Supporting systems: SMSC and Redis-based session/cache layer
+
+- Cloud-native implementation:
+  - Microservices-based architecture
+  - Kubernetes orchestration
+  - Observability with Prometheus and Grafana
+
+---
+
+## 💡 Why This Project Matters
+
+Modern telecom systems are evolving towards cloud-native architectures, where traditional network functions are implemented as distributed microservices.
+
+This project demonstrates how real telecom control-plane logic (authentication, session management, policy control, charging) can be translated into scalable, observable, Kubernetes-based systems.
 
 ---
 
@@ -46,6 +62,33 @@ graph TD
     Prometheus --> AAA
     Grafana --> Prometheus
 ```
+
+---
+
+## 🧠 Real-World Mapping
+
+This lab maps directly to real telecom systems:
+
+- AMF ↔ Access and Mobility Management Function (5G Core)
+- SMF ↔ Session Management Function
+- AUSF ↔ Authentication Server Function
+- PCF ↔ Policy Control Function
+- OCS ↔ Online Charging System
+- UDM ↔ Subscriber database
+
+The architecture reflects simplified but realistic 5G control-plane interactions.
+
+---
+
+## 🧪 Example Scenarios
+
+- UE registration via AMF with authentication through AUSF
+- PDU session creation with SMF orchestration
+- Policy enforcement via PCF
+- Charging validation via OCS
+- Redis-based session storage and caching
+
+---
 
 ## ⚙️ Services
 
