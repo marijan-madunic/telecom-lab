@@ -89,6 +89,14 @@ The architecture reflects simplified but realistic 5G control-plane interactions
 - Redis-based session storage and caching
 
 ---
+---
+
+## 🚀 Additional Labs
+
+- [BGP Network Lab](./network-lab) — container-based eBGP routing simulation using FRRouting and Containerlab, including route exchange and end-to-end connectivity validation.
+
+---
+---
 
 ## ⚙️ Services
 
