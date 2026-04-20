@@ -14,7 +14,7 @@ Each router advertises its local subnet, enabling end-to-end connectivity betwee
 ---
 
 ## Topology
-
+```text
 [ PC1 ] 192.168.1.10
     |
     |
@@ -26,7 +26,7 @@ Each router advertises its local subnet, enabling end-to-end connectivity betwee
     |
     |
 [ PC2 ] 192.168.2.10
-
+```
 ---
 
 ## Technologies Used
