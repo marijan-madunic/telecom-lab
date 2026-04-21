@@ -1,4 +1,4 @@
-# 📡 Telecom Lab – Cloud-Native 5G Core Simulation
+# 📡 Telecom Lab – Cloud-Native 4G/5G Core Simulation
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue)
 ![Flask](https://img.shields.io/badge/Flask-microservice-black)
@@ -9,36 +9,29 @@
 ![GitHub repo size](https://img.shields.io/github/repo-size/marijan-madunic/telecom-lab)
 ![GitHub last commit](https://img.shields.io/github/last-commit/marijan-madunic/telecom-lab)
 
-A cloud-native telecom core simulation built with microservices and Kubernetes, demonstrating real-world 4G/5G control-plane concepts including authentication, session orchestration, policy control, charging, and observability.
+
+Microservices-based simulation of a telecom core network implemented on Kubernetes, designed to replicate key 4G/5G control-plane workflows including authentication, session management, policy control, charging, and observability.
+
+Built as a cloud-native system with a focus on distributed service interaction, scalability patterns, and operational visibility.
 
 ---
 
-## 🎯 Project Overview
+## 🧱 Architecture Overview
 
-This project simulates a cloud-native telecom core network, demonstrating real-world 4G/5G control-plane workflows such as authentication, session orchestration, policy control, charging, and observability.
-It combines:
+The system is composed of independent microservices deployed in a Kubernetes cluster:
 
-- Telecom domain knowledge across 4G/5G control-plane architecture:
-  - 5G core functions: AMF, SMF, AUSF, UDM, PCF
-  - 4G/legacy components: AAA, PCRF, OCS
-  - Supporting systems: SMSC and Redis-based session/cache layer
+- **AMF** – Access & Mobility Management  
+- **SMF** – Session Management Function  
+- **AUSF** – Authentication Function  
+- **UDM** – Subscriber Data Management  
+- **PCF / PCRF** – Policy Control  
+- **OCS** – Online Charging System  
+- **AAA** – Legacy authentication flow (4G-style)  
+- **SMSC** – Messaging simulation  
+- **Redis** – Session/cache layer  
 
-- Cloud-native implementation:
-  - Microservices-based architecture
-  - Kubernetes orchestration
-  - Observability with Prometheus and Grafana
+All services communicate over HTTP-based APIs and share state through Redis where applicable.
 
----
-
-## 💡 Why This Project Matters
-
-Modern telecom systems are evolving towards cloud-native architectures, where traditional network functions are implemented as distributed microservices.
-
-This project demonstrates how real telecom control-plane logic (authentication, session management, policy control, charging) can be translated into scalable, observable, Kubernetes-based systems.
-
----
-
-## 🧩 Architecture
 
 ```mermaid
 graph TD
@@ -65,60 +58,22 @@ graph TD
 
 ---
 
-## 🧠 Real-World Mapping
+## 🧩 Design Principles
 
-This lab maps directly to real telecom systems:
-
-- AMF ↔ Access and Mobility Management Function (5G Core)
-- SMF ↔ Session Management Function
-- AUSF ↔ Authentication Server Function
-- PCF ↔ Policy Control Function
-- OCS ↔ Online Charging System
-- UDM ↔ Subscriber database
-
-The architecture reflects simplified but realistic 5G control-plane interactions.
+- Microservice isolation per network function  
+- Stateless service design where applicable  
+- Externalized session/state storage (Redis)  
+- Kubernetes-native deployment model  
+- Observable system behavior via metrics  
 
 ---
 
-## 🧪 Example Scenarios
+## 🔄 Core Flows
 
-- UE registration via AMF with authentication through AUSF
-- PDU session creation with SMF orchestration
-- Policy enforcement via PCF
-- Charging validation via OCS
-- Redis-based session storage and caching
+### UE Registration (5G-style)
 
----
----
-
-## 🚀 Additional Labs
-
-- [BGP Network Lab](./network-lab) — container-based eBGP routing simulation using FRRouting and Containerlab, including route exchange and end-to-end connectivity validation.
-
----
----
-
-## ⚙️ Services
-
-Service	Description
-| Service | Description                                                    |
-|---------|----------------------------------------------------------------|
-|   AAA   | Authentication and orchestration (legacy / 4G-style flow)      |
-|   AMF   | 5G Access & Mobility Management (registration + orchestration) |
-|   SMF   | Session Management (PDU session handling)                      |
-|   AUSF  | Authentication Server Function                                 |
-|   UDM   | Subscriber database simulator                                  |
-|   PCRF  | Policy control (4G-style)                                      |
-|   PCF   | Policy control (5G-style)                                      |
-|   OCS   | Online charging system                                         |
-|   SMSC  | SMS handling and delivery tracking                             |
-|  Redis  | Cache and session storage                                      |
-
----
-
-## 🔁 Core Flows
-
-1️⃣ UE Registration (5G AMF Flow)
+AMF → AUSF → UDM → AMF  
+Authentication and subscriber validation flow.
 
 ```mermaid
 sequenceDiagram
@@ -137,9 +92,13 @@ sequenceDiagram
 
     AMF->>Redis: Store session
     AMF-->>UE: Registration OK
-```	
+```  
+---
 
-2️⃣ PDU Session Flow
+### PDU Session Establishment
+
+AMF → SMF → PCF → OCS  
+Session creation with policy enforcement and charging validation.
 
 ```mermaid
 sequenceDiagram
@@ -161,89 +120,94 @@ sequenceDiagram
 
     SMF-->>AMF: Session created
     AMF-->>UE: PDU established
-```	
+```     
 
 ---
 
-## 📊 Observability (Prometheus + Grafana)
+### Charging Flow (Legacy AAA path)
 
-The project includes full observability using Prometheus and Grafana.
+Client → AAA → UDM / PCRF / OCS → Redis  
+Authentication, policy assignment, and charging validation.
 
-AMF Metrics
-- amf_registrations_total
-- amf_pdu_sessions_created_total
-- amf_auth_failures_total
-- amf_errors_total
-- amf_register_requests_total
-- amf_pdu_session_requests_total
+---
 
-Dashboard Features
-- KPI overview (registrations, sessions, errors)
-- Real-time traffic monitoring
-- Health indicators (failures, errors)
+## 🧪 Example Scenarios
 
-Example Dashboard
-🟢 Healthy system → 0 errors
-🔴 Errors/failures → immediate visibility
+- UE registration via AMF with authentication through AUSF
+- PDU session creation with SMF orchestration
+- Policy enforcement via PCF
+- Charging validation via OCS
+- Redis-based session storage and caching
 
-🔎 AAA Flow (Legacy Control Plane)
+---
 
-Client → AAA → UDM / PCRF / OCS → Redis
+## 📊 Observability
 
-- subscriber authentication
-- policy assignment
-- charging validation
-- caching with Redis
+The system exposes metrics via Prometheus and visualizes them in Grafana.
 
-## 🧠 Key Features
-- Microservice-based telecom architecture
-- 4G + 5G hybrid control-plane simulation
-- Redis-based session and cache management
-- Kubernetes deployments with self-healing
-- Prometheus metrics + Grafana dashboards
-- Realistic telecom flows (registration + PDU session)
+### Key Metrics (AMF example)
 
-## ❤️ Kubernetes
+- `amf_registrations_total`  
+- `amf_pdu_sessions_created_total`  
+- `amf_auth_failures_total`  
+- `amf_errors_total`  
+
+### Dashboards
+
+- Registration and session rates  
+- Failure and error tracking  
+- System health overview  
+- Real-time service activity  
+
+### Stack
+
+- Prometheus  
+- Grafana  
+
+---
+
+## ☸️ Kubernetes Deployment
 
 Each service includes:
 
-- Deployment
-- Service
-- Health endpoint
-- Liveness & Readiness probes
+- Deployment  
+- Service definition  
+- Health endpoints  
+- Liveness & readiness probes  
 
 Kubernetes provides:
 
-- self-healing pods
-- rolling updates
-- service discovery
+- Self-healing pods  
+- Rolling updates  
+- Service discovery  
+- Horizontal scaling capability  
 
 ---
 
-##🛠 Running the Project
+## 🚀 Local Setup
+
+### Start cluster
 
 ```bash
 minikube start
 eval $(minikube docker-env)
 ```
 
-Build images:
+### Build services
 ```bash
 docker build -t aaa-service ./aaa-service
 docker build -t amf-service ./amf-service
 docker build -t smf-service ./smf-service
 ```
 
-Deploy:
+### Deploy system
 ```bash
 kubectl apply -R -f kubernetes/
 ```
 
-📈 Monitoring
+## 📈 Monitoring Access
 ```bash
 kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090:9090
-```
-```bash
 kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80
 ```
 
@@ -251,17 +215,37 @@ Prometheus → http://localhost:9090
 
 Grafana → http://localhost:3000
 
+---
+---
 
-## 🔮 Future Improvements
+## 🚀 Additional Labs
 
-- CI/CD pipeline
-- distributed tracing
-- SMF observability
-- traffic generator
-- full 5G core expansion (NRF, NSSF…)
+- [BGP Network Lab](./network-lab) — Container-based eBGP routing simulation using FRRouting and Containerlab, including route exchange validation and end-to-end connectivity testing.
+
+---
+---
+
+## 🧠 Key Capabilities Demonstrated
+
+- Distributed system design using microservices
+- Kubernetes orchestration patterns
+- Network function virtualization concepts (4G/5G core)
+- Observability and metrics-driven operations
+- Stateful vs stateless service separation
+- Failure visibility through monitoring
 
 ---
 
-👨‍💻 Author
+## 🔮 Future Work
+
+- CI/CD pipeline integration
+- Distributed tracing (OpenTelemetry)
+- Traffic generation framework
+- NRF/NSSF extension for full 5G core simulation
+- Load testing under Kubernetes scaling scenarios
+
+---
+
+## 👨‍💻 Author
 
 Marijan Madunić
