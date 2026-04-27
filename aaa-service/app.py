@@ -5,6 +5,7 @@ import requests
 import logging
 from flask import Flask, jsonify
 from prometheus_client import Counter, start_http_server
+import socket
 
 app = Flask(__name__)
 
@@ -62,11 +63,11 @@ def auth(imsi):
         if imsi in BLACKLIST:
             aaa_auth_denied_total.inc()
             logger.warning(f"BLOCKED IMSI {imsi}")
-            return jsonify({"imsi": imsi, "auth": "denied", "reason": "blacklisted"}), 403
+            return jsonify({"imsi": imsi, "auth": "denied", "reason": "blacklisted", "instance": socket.gethostname()}), 403
 
         cache_key = f"imsi:{imsi}"
 
-        # 🔹 Cache (bez balance!)
+        #  Cache (without balance!)
         cached = redis_client.get(cache_key)
         if cached:
             logger.info(f"Cache HIT for {imsi}")
@@ -75,7 +76,7 @@ def auth(imsi):
         else:
             logger.info(f"Cache MISS for {imsi} → calling UDM")
 
-            # 🔹 UDM
+            #  UDM
             response = requests.get(f"{UDM_URL}/subscriber/{imsi}", timeout=3)
 
             if response.status_code != 200:
@@ -86,13 +87,13 @@ def auth(imsi):
                 data["plan"] = data.get("plan", "bronze")
                 is_roaming = data.get("is_roaming", False)
 
-            # 🔹 Roaming downgrade
+            #  Roaming downgrade
             if is_roaming:
                 old_plan = data["plan"]
                 data["plan"] = DOWNGRADE.get(data["plan"], "bronze")
                 logger.info(f"Roaming IMSI {imsi}: {old_plan} → {data['plan']}")
 
-            # 🔹 PCRF
+            #  PCRF
             try:
                 logger.info(f"Calling PCRF: {PCRF_URL}/policy/{data['plan']} roaming={is_roaming}")
 
@@ -111,7 +112,7 @@ def auth(imsi):
                 logger.warning(f"PCRF request failed: {e}")
                 data["policy"] = "default"
 
-            # 🔹 spremi u cache (bez balance!)
+            #  spremi u cache (without balance!)
             cache_copy = data.copy()
             cache_copy.pop("balance", None)
             redis_client.setex(cache_key, CACHE_TTL, json.dumps(cache_copy))
@@ -133,7 +134,8 @@ def auth(imsi):
                         "imsi": imsi,
                         "auth": "denied",
                         "reason": "no balance",
-                        "balance": ocs_data.get("balance", 0)
+                        "balance": ocs_data.get("balance", 0),
+                        "instance": socket.gethostname()
                     }), 403
 
                 data["balance"] = ocs_data.get("balance", 0)
@@ -146,6 +148,7 @@ def auth(imsi):
 
         data["auth"] = "granted"
         data["source"] = source
+        data["instance"] = socket.gethostname()
 
         aaa_auth_granted_total.inc()
         return jsonify(data)
