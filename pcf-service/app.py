@@ -1,11 +1,14 @@
 import os
 import logging
+import requests
 from flask import Flask, request, jsonify
 from prometheus_client import Counter, start_http_server
 
 app = Flask(__name__)
 
 logging.basicConfig(level=logging.INFO)
+
+UDM_URL = os.getenv("UDM_URL", "http://udm-service:8082")
 
 pcf_requests_total = Counter(
     "pcf_requests_total",
@@ -38,10 +41,7 @@ def policy():
     pcf_requests_total.inc()
 
     try:
-        data = request.get_json()
-        if not data:
-            pcf_policy_errors_total.inc()
-            return jsonify({"error": "Missing JSON body"}), 400
+        data = request.get_json(silent=True) or {}
 
         imsi = data.get("imsi")
         session_type = data.get("session_type", "data")
@@ -51,36 +51,67 @@ def policy():
             pcf_policy_errors_total.inc()
             return jsonify({"error": "Missing imsi"}), 400
 
-        logging.info(f"PCF request received for IMSI={imsi}, session_type={session_type}, location={location}")
+        logging.info(
+            f"PCF request received for IMSI={imsi}, "
+            f"session_type={session_type}, location={location}"
+        )
 
-        # Simple demo policy logic
-        if imsi.endswith("999") or imsi.endswith("666"):
+        try:
+            udm_response = requests.get(f"{UDM_URL}/policy/{imsi}", timeout=3)
+        except requests.exceptions.RequestException as e:
+            logging.exception("UDM unreachable from PCF")
+            pcf_policy_errors_total.inc()
+            return jsonify({
+                "status": "ERROR",
+                "reason": "UDM unreachable",
+                "error": str(e)
+            }), 500
+
+        udm_data = udm_response.json()
+
+        if udm_response.status_code == 404:
             pcf_policy_denied_total.inc()
             return jsonify({
                 "imsi": imsi,
                 "allowed": False,
-                "reason": "subscriber_blocked"
+                "reason": "subscriber_not_found",
+                "udm_response": udm_data
+            }), 404
+
+        if udm_response.status_code != 200:
+            pcf_policy_denied_total.inc()
+            return jsonify({
+                "imsi": imsi,
+                "allowed": False,
+                "reason": "udm_policy_lookup_failed",
+                "udm_response": udm_data
             }), 403
 
-        # Example QoS tiers based on IMSI suffix
-        if imsi.endswith("001"):
-            qos = "gold"
-            max_bandwidth = "100Mbps"
-        elif imsi.endswith("002"):
-            qos = "silver"
-            max_bandwidth = "50Mbps"
-        else:
-            qos = "bronze"
-            max_bandwidth = "10Mbps"
+        if udm_data.get("access_restriction"):
+            pcf_policy_denied_total.inc()
+            return jsonify({
+                "imsi": imsi,
+                "session_type": session_type,
+                "location": location,
+                "allowed": False,
+                "reason": "access_restriction_enabled",
+                "source": "UDM"
+            }), 403
+
+        qos_profile = udm_data.get("qos_profile", "unknown")
+        plan = udm_data.get("plan", "unknown")
 
         response = {
             "imsi": imsi,
             "session_type": session_type,
             "location": location,
             "allowed": True,
-            "qos": qos,
-            "max_bandwidth": max_bandwidth,
-            "charging": "online"
+            "plan": plan,
+            "qos_profile": qos_profile,
+            "roaming_enabled": udm_data.get("roaming_enabled"),
+            "max_sessions": udm_data.get("max_sessions"),
+            "charging": "online",
+            "source": "UDM"
         }
 
         pcf_policy_allowed_total.inc()
