@@ -29,11 +29,13 @@ The system is composed of independent microservices deployed in a Kubernetes clu
 - **AAA** – Legacy authentication flow (4G-style)  
 - **SMSC** – Messaging simulation  
 - **Redis** – Session/cache layer  
+- **PostgreSQL** – Persistent subscriber and policy datastore (UDM backend)
 
 All services communicate over HTTP-based APIs and share state through Redis where applicable.
 
 
 ```mermaid
+
 graph TD
 
     UE[UE / Client] --> AAA
@@ -46,14 +48,19 @@ graph TD
 
     AMF --> AUSF
     AUSF --> UDM
+    UDM --> DB[(PostgreSQL)]
+
     AMF --> SMF
     SMF --> PCF
+    PCF --> UDM
+
     SMF --> OCS
     AMF --> Redis
 
     Prometheus --> AMF
     Prometheus --> AAA
     Grafana --> Prometheus
+
 ```
 
 ---
@@ -68,12 +75,30 @@ graph TD
 
 ---
 
+## 🗄️  Data Layer
+
+The system now includes a persistent data layer powered by PostgreSQL.
+
+    UDM is backed by PostgreSQL and acts as the single source of truth for:
+        Subscriber identities (IMSI/MSISDN)
+        Subscription plans and QoS profiles
+        Access restrictions and roaming configuration
+
+    Other control-plane functions (AUSF, PCF) consume subscriber data via UDM APIs,
+    following a service-oriented 5G architecture approach.
+
+This eliminates hardcoded data and enables realistic stateful behavior across the system.
+
+---
+
 ## 🔄 Core Flows
 
 ### UE Registration (5G-style)
 
-AMF → AUSF → UDM → AMF  
-Authentication and subscriber validation flow.
+AMF → AUSF → UDM → PostgreSQL → UDM → AMF  
+Authentication and subscriber validation flow using persistent subscriber data.
+
+UDM acts as the single source of truth for subscriber data, backed by PostgreSQL.
 
 ```mermaid
 sequenceDiagram
@@ -82,23 +107,27 @@ sequenceDiagram
     participant AMF
     participant AUSF
     participant UDM
-    participant Redis
+    participant DB as PostgreSQL
 
     UE->>AMF: Register (IMSI)
     AMF->>AUSF: Authenticate
-    AUSF->>UDM: Fetch subscriber
-    UDM-->>AUSF: Data
+    AUSF->>UDM: Request auth data
+    UDM->>DB: Query subscriber
+    DB-->>UDM: Subscriber data
+    UDM-->>AUSF: Auth decision
     AUSF-->>AMF: Auth OK
 
-    AMF->>Redis: Store session
     AMF-->>UE: Registration OK
-```  
+```
+
 ---
 
 ### PDU Session Establishment
 
-AMF → SMF → PCF → OCS  
-Session creation with policy enforcement and charging validation.
+AMF → SMF → PCF → UDM → PostgreSQL → PCF → SMF  
+Session creation with policy enforcement based on subscriber data.
+
+PCF retrieves policy decisions from UDM instead of using static logic, enabling dynamic policy enforcement.
 
 ```mermaid
 sequenceDiagram
@@ -107,12 +136,18 @@ sequenceDiagram
     participant AMF
     participant SMF
     participant PCF
+    participant UDM
+    participant DB as PostgreSQL
     participant OCS
 
     UE->>AMF: Request PDU Session
     AMF->>SMF: Create Session
 
     SMF->>PCF: Policy request
+    PCF->>UDM: Fetch subscriber policy
+    UDM->>DB: Query subscriber profile
+    DB-->>UDM: Plan + QoS + restrictions
+    UDM-->>PCF: Policy data
     PCF-->>SMF: QoS + limits
 
     SMF->>OCS: Charging check
@@ -138,6 +173,8 @@ Authentication, policy assignment, and charging validation.
 - Policy enforcement via PCF
 - Charging validation via OCS
 - Redis-based session storage and caching
+- Subscriber authentication via AUSF using UDM-backed PostgreSQL data
+- Policy decisions via PCF based on real subscriber profiles from UDM
 
 ---
 
@@ -233,6 +270,18 @@ Grafana → http://localhost:3000
 - Observability and metrics-driven operations
 - Stateful vs stateless service separation
 - Failure visibility through monitoring
+- Integration of PostgreSQL as persistent datastore for telecom control-plane data
+- Centralized subscriber data model via UDM (source of truth pattern)
+- Service-to-service communication (AUSF/PCF → UDM)
+
+---
+
+## 🔗 Current Control-Plane Data Flow
+
+AUSF → UDM → PostgreSQL  
+PCF  → UDM → PostgreSQL  
+
+UDM acts as the central data provider for subscriber and policy information across the system.
 
 ---
 
