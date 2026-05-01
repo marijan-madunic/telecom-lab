@@ -155,7 +155,56 @@ sequenceDiagram
 
     SMF-->>AMF: Session created
     AMF-->>UE: PDU established
-```     
+```
+
+---
+
+### End-to-End 5G Control-Plane Flow
+
+UE → AMF → AUSF → UDM → PostgreSQL  
+UE → AMF → SMF → PCF → UDM → PostgreSQL  
+
+This diagram shows the combined authentication and policy-control path using UDM as the central subscriber data provider.
+
+```mermaid
+sequenceDiagram
+
+    participant UE
+    participant AMF
+    participant AUSF
+    participant UDM
+    participant DB as PostgreSQL
+    participant SMF
+    participant PCF
+    participant OCS
+    participant Redis
+
+    UE->>AMF: Register (IMSI)
+    AMF->>AUSF: Authenticate subscriber
+    AUSF->>UDM: Request auth decision
+    UDM->>DB: Query subscriber data
+    DB-->>UDM: Subscriber status + restrictions
+    UDM-->>AUSF: Auth decision
+    AUSF-->>AMF: Auth OK
+
+    AMF->>Redis: Store registration/session context
+    AMF-->>UE: Registration OK
+
+    UE->>AMF: Request PDU Session
+    AMF->>SMF: Create PDU session
+    SMF->>PCF: Request policy/QoS
+    PCF->>UDM: Fetch subscriber policy
+    UDM->>DB: Query plan + QoS profile
+    DB-->>UDM: Plan + QoS + restrictions
+    UDM-->>PCF: Policy data
+    PCF-->>SMF: Policy decision
+
+    SMF->>OCS: Charging check
+    OCS-->>SMF: Balance OK
+
+    SMF-->>AMF: Session created
+    AMF-->>UE: PDU Session established
+```
 
 ---
 
