@@ -14,6 +14,8 @@ Microservices-based simulation of a telecom core network implemented on Kubernet
 
 Built as a cloud-native system with a focus on distributed service interaction, scalability patterns, and operational visibility.
 
+This project evolves from a mock-based simulation into a stateful, data-driven 5G core control-plane using PostgreSQL-backed subscriber management via UDM.
+
 ---
 
 ## 🧱 Architecture Overview
@@ -41,18 +43,19 @@ graph TD
     UE[UE / Client] --> AAA
     UE --> AMF
 
-    AAA --> UDM
+    AAA -->|auth| UDM
     AAA --> PCRF
     AAA --> OCS
     AAA --> Redis[(Redis Cache)]
 
-    AMF --> AUSF
-    AUSF --> UDM
-    UDM --> DB[(PostgreSQL)]
+    AMF -->|authentication request| AUSF
+    AUSF -->|auth data| UDM
 
     AMF --> SMF
-    SMF --> PCF
-    PCF --> UDM
+    SMF -->|policy request| PCF
+    PCF -->|subscriber policy| UDM
+
+    UDM -->|query| DB[(PostgreSQL)]
 
     SMF --> OCS
     AMF --> Redis
@@ -88,6 +91,8 @@ The system now includes a persistent data layer powered by PostgreSQL.
     following a service-oriented 5G architecture approach.
 
 This eliminates hardcoded data and enables realistic stateful behavior across the system.
+
+This follows the 5G architecture principle where UDM acts as the centralized subscriber data repository accessed by other control-plane functions.
 
 ---
 
@@ -322,6 +327,7 @@ Grafana → http://localhost:3000
 - Integration of PostgreSQL as persistent datastore for telecom control-plane data
 - Centralized subscriber data model via UDM (source of truth pattern)
 - Service-to-service communication (AUSF/PCF → UDM)
+- Implementation of 5G-like control-plane interactions (AUSF/PCF/UDM) with centralized data model
 
 ---
 
