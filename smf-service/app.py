@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
-UDM_URL = os.getenv("UDM_URL", "http://udm-service:8081")
+UDM_URL = os.getenv("UDM_URL", "http://udm-service:8082")
 SMF_METRICS_PORT = int(os.getenv("SMF_METRICS_PORT", "8003"))
 IP_POOL_SUBNET = os.getenv("IP_POOL_SUBNET", "10.20.0.0/24")
 PCF_URL = os.getenv("PCF_URL", "http://pcf-service:8084")
@@ -101,7 +101,7 @@ def get_policy_from_pcf(imsi: str, dnn: str, s_nssai: str) -> Optional[Dict[str,
                 "slice": s_nssai,
                 "location": "HR"
             },
-            timeout=3
+            timeout=10
         )
 
         if response.status_code == 200:

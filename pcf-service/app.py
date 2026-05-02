@@ -57,7 +57,7 @@ def policy():
         )
 
         try:
-            udm_response = requests.get(f"{UDM_URL}/policy/{imsi}", timeout=3)
+            udm_response = requests.get(f"{UDM_URL}/policy/{imsi}", timeout=10)
         except requests.exceptions.RequestException as e:
             logging.exception("UDM unreachable from PCF")
             pcf_policy_errors_total.inc()

@@ -68,11 +68,32 @@ def register():
     try:
         logger.info("Register request received for IMSI=%s", imsi)
 
-        auth_resp = requests.post(
-            f"{AUSF_URL}/authenticate",
-            json={"imsi": imsi},
-            timeout=3
-        )
+
+        auth_resp = None
+        for attempt in range(3):
+            try:
+                auth_resp = requests.post(
+                    f"{AUSF_URL}/authenticate",
+                    json={"imsi": imsi},
+                    timeout=2
+                )
+                break
+            except requests.exceptions.RequestException as e:
+                logger.warning(
+                    "AUSF attempt %s failed for IMSI=%s error=%s",
+                    attempt + 1,
+                    imsi,
+                    str(e)
+                )
+
+        if auth_resp is None:
+            amf_errors_total.inc()
+            return jsonify({
+                "status": "ERROR",
+                "error": "ausf unavailable after retries"
+            }), 503
+
+
 
         if auth_resp.status_code != 200:
             amf_auth_failures_total.inc()
@@ -159,7 +180,7 @@ def create_pdu_session():
                 "imsi": imsi,
                 "dnn": dnn
             },
-            timeout=5
+            timeout=15
         )
 
         if smf_resp.status_code not in (200, 201):
