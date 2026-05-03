@@ -4,7 +4,7 @@ import logging
 import requests
 import redis
 from flask import Flask, request, jsonify
-from prometheus_client import Counter, start_http_server
+from prometheus_client import Counter, Gauge, start_http_server
 
 app = Flask(__name__)
 
@@ -39,6 +39,27 @@ amf_auth_failures_total = Counter(
 amf_errors_total = Counter(
     "amf_errors_total",
     "Total AMF internal errors"
+)
+
+amf_handover_requests_total = Counter(
+    "amf_handover_requests_total",
+    "Total AMF handover requests"
+)
+
+amf_handovers_completed_total = Counter(
+    "amf_handovers_completed_total",
+    "Total successful AMF handovers"
+)
+
+amf_handover_failures_total = Counter(
+    "amf_handover_failures_total",
+    "Total failed AMF handovers"
+)
+
+amf_active_ues_per_cell = Gauge(
+    "amf_active_ues_per_cell",
+    "Number of active UEs per cell known by AMF",
+    ["cell"]
 )
 
 AUSF_URL = os.getenv("AUSF_URL", "http://ausf-service:8085")
@@ -232,6 +253,102 @@ def create_pdu_session():
             "error": "internal server error"
         }), 500
 
+@app.route("/handover", methods=["POST"])
+def handover():
+    amf_handover_requests_total.inc()
+
+    data = request.get_json(silent=True) or {}
+
+    imsi = data.get("imsi")
+    from_cell = data.get("from_cell")
+    to_cell = data.get("to_cell")
+    reason = data.get("reason", "unknown")
+
+    if not imsi or not from_cell or not to_cell:
+        amf_handover_failures_total.inc()
+        return jsonify({
+            "status": "ERROR",
+            "error": "missing imsi, from_cell or to_cell"
+        }), 400
+
+    try:
+        logger.info(
+            "Handover request received IMSI=%s from_cell=%s to_cell=%s reason=%s",
+            imsi,
+            from_cell,
+            to_cell,
+            reason
+        )
+
+        amf_session_id = rds.get(f"amf:session:{imsi}")
+        if not amf_session_id:
+            amf_handover_failures_total.inc()
+            return jsonify({
+                "status": "ERROR",
+                "error": "ue not registered",
+                "imsi": imsi
+            }), 404
+
+        previous_cell = rds.hget(f"amf:ue:{imsi}", "current_cell") or from_cell
+
+        if previous_cell:
+            rds.srem(f"amf:cell:{previous_cell}:ues", imsi)
+
+        rds.sadd(f"amf:cell:{to_cell}:ues", imsi)
+
+        rds.hset(
+            f"amf:ue:{imsi}",
+            mapping={
+                "imsi": imsi,
+                "current_cell": to_cell,
+                "previous_cell": previous_cell,
+                "handover_reason": reason,
+                "amf_session_id": amf_session_id
+            }
+        )
+
+        for cell in [from_cell, to_cell, previous_cell]:
+            if cell:
+                amf_active_ues_per_cell.labels(cell=cell).set(
+                    rds.scard(f"amf:cell:{cell}:ues")
+                )
+
+        amf_handovers_completed_total.inc()
+
+        logger.info(
+            "Handover completed IMSI=%s previous_cell=%s target_cell=%s",
+            imsi,
+            previous_cell,
+            to_cell
+        )
+
+        return jsonify({
+            "status": "HANDOVER_COMPLETED",
+            "imsi": imsi,
+            "from_cell": from_cell,
+            "previous_cell": previous_cell,
+            "to_cell": to_cell,
+            "reason": reason,
+            "amf_session_id": amf_session_id
+        }), 200
+
+    except redis.exceptions.RedisError as e:
+        amf_errors_total.inc()
+        amf_handover_failures_total.inc()
+        logger.error("Redis error during handover for IMSI=%s error=%s", imsi, str(e))
+        return jsonify({
+            "status": "ERROR",
+            "error": "redis unavailable"
+        }), 503
+
+    except Exception:
+        amf_errors_total.inc()
+        amf_handover_failures_total.inc()
+        logger.exception("Unexpected error during handover for IMSI=%s", imsi)
+        return jsonify({
+            "status": "ERROR",
+            "error": "internal server error"
+        }), 500
 
 @app.route("/sessions/<imsi>", methods=["GET"])
 def get_session(imsi):

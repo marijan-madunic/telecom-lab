@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ran-simulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ran-simulator
+  template:
+    metadata:
+      labels:
+        app: ran-simulator
+    spec:
+      containers:
+        - name: ran-simulator
+          image: ran-simulator:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8087
+              name: http
+            - containerPort: 8007
+              name: metrics
+          env:
+            - name: AMF_URL
+              value: "http://amf-service:8086"
+            - name: METRICS_PORT
+              value: "8007"
+            - name: INTERVAL_SECONDS
+              value: "5"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ran-simulator
+spec:
+  selector:
+    app: ran-simulator
+  ports:
+    - name: http
+      port: 8087
+      targetPort: 8087
+    - name: metrics
+      port: 8007
+      targetPort: 8007
+  type: ClusterIP
