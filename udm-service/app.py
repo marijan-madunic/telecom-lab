@@ -122,6 +122,33 @@ def policy_data(imsi):
     }), 200
 
 
+@app.route("/subscribers/eligible", methods=["GET"])
+def eligible_subscribers():
+    query = """
+        SELECT s.imsi
+        FROM subscribers s
+        JOIN subscriber_profiles sp ON sp.subscriber_id = s.id
+        WHERE s.status = 'ACTIVE'
+          AND sp.access_restriction = false
+        ORDER BY s.imsi
+        LIMIT 20;
+    """
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(query)
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        "count": len(rows),
+        "imsis": [row[0] for row in rows]
+    }), 200
+
+
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({"status": "UDM service running with PostgreSQL backend"}), 200

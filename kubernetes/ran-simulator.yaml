@@ -28,6 +28,10 @@ spec:
               value: "8007"
             - name: INTERVAL_SECONDS
               value: "5"
+            - name: UDM_URL
+              value: "http://udm-service:8082"
+            - name: UE_POOL_SIZE
+              value: "10"
 ---
 apiVersion: v1
 kind: Service

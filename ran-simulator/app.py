@@ -12,6 +12,8 @@ app = Flask(__name__)
 AMF_URL = os.getenv("AMF_URL", "http://amf-service:8086")
 METRICS_PORT = int(os.getenv("METRICS_PORT", "8007"))
 INTERVAL_SECONDS = int(os.getenv("INTERVAL_SECONDS", "5"))
+UDM_URL = os.getenv("UDM_URL", "http://udm-service:8082")
+UE_POOL_SIZE = int(os.getenv("UE_POOL_SIZE", "10"))
 
 CELLS = {
     "cell-A": {"connected_ues": set(), "prb_usage": 25},
@@ -19,13 +21,7 @@ CELLS = {
     "cell-C": {"connected_ues": set(), "prb_usage": 65},
 }
 
-IMSIS = [
-    "001010000000002",
-    "001010000000010",
-    "001010000000011",
-    "001010000000013",
-    "001010000000015",
-]
+IMSIS = []
 
 ue_location = {}
 
@@ -68,6 +64,28 @@ def pick_best_cell(current_cell):
     candidates = [c for c in CELLS.keys() if c != current_cell]
     return min(candidates, key=lambda c: CELLS[c]["prb_usage"])
 
+def load_eligible_imsis():
+    global IMSIS
+
+    try:
+        response = requests.get(
+            f"{UDM_URL}/subscribers/eligible",
+            timeout=10
+        )
+
+        if response.status_code != 200:
+            print(f"[RAN] Failed to fetch eligible IMSIs from UDM: HTTP {response.status_code}")
+            IMSIS = []
+            return
+
+        data = response.json()
+        IMSIS = data.get("imsis", [])[:UE_POOL_SIZE]
+
+        print(f"[RAN] Loaded {len(IMSIS)} eligible IMSIs from UDM: {IMSIS}")
+
+    except Exception as e:
+        print(f"[RAN] Failed to load eligible IMSIs from UDM: {e}")
+        IMSIS = []
 
 def register_ue(imsi):
     cell = random.choice(list(CELLS.keys()))
@@ -137,6 +155,12 @@ def simulate_cell_load():
 
 def simulation_loop():
     print("[RAN] Starting RAN/gNB simulator loop")
+
+    load_eligible_imsis()
+
+    if not IMSIS:
+        print("[RAN] No eligible IMSIs available. Simulator stopped.")
+        return
 
     for imsi in IMSIS:
         register_ue(imsi)
