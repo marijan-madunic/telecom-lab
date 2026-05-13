@@ -5,15 +5,17 @@ metadata:
   labels:
     app: amf-service
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: amf-service
   ports:
     - name: http
       port: 8086
       targetPort: 8086
+      nodePort: 30086
       protocol: TCP
     - name: metrics
       port: 8006
       targetPort: 8006
+      nodePort: 30006
       protocol: TCP

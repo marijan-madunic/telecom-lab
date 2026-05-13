@@ -18,6 +18,12 @@ This project evolves from a mock-based simulation into a stateful, data-driven 5
 
 ---
 
+## Related Project
+
+- [telecom-lab-RAN](https://github.com/marijan-madunic/telecom-lab-RAN) — C++ RAN simulator running on k3s and communicating with this Core lab remotely.
+
+---
+
 ## 🧱 Architecture Overview
 
 The system is composed of independent microservices deployed in a Kubernetes cluster:
