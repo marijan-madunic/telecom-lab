@@ -24,24 +24,6 @@ This project evolves from a mock-based simulation into a stateful, data-driven 5
 
 ---
 
-## Deployment Evolution
-
-The project initially started on Minikube for fast local Kubernetes development and testing.
-
-It has now been migrated to a lightweight multi-node-ready k3s environment to provide a more realistic cloud-native telecom deployment model with:
-- separated RAN and Core workloads
-- lightweight Kubernetes cluster architecture
-- scalable service deployment
-- improved operational realism
-- future multi-node expansion capability
-
-Current architecture direction:
-- telecom-lab-Core → k3s control-plane / core services
-- telecom-lab-RAN → dedicated RAN node with C++ RAN simulator
-- future observability node → Prometheus / Grafana / Alertmanager
-
----
-
 ## 🧱 Architecture Overview
 
 The system is composed of independent microservices deployed in a Kubernetes cluster:
@@ -103,7 +85,7 @@ It has since been migrated to a lightweight k3s-based Kubernetes environment to 
 - improved operational realism
 - future multi-node expansion capability
 
-Current architecture direction:
+### Current architecture direction:
 
 ```text
 VM1 - telecom-lab-RAN
@@ -357,11 +339,6 @@ Current platform:
 
 Legacy development platform:
 - Minikube
-```bash
-minikube start
-eval $(minikube docker-env)
-```
-
 
 ### Build services
 ```bash
