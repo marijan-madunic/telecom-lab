@@ -24,19 +24,37 @@ This project evolves from a mock-based simulation into a stateful, data-driven 5
 
 ---
 
+## Deployment Evolution
+
+The project initially started on Minikube for fast local Kubernetes development and testing.
+
+It has now been migrated to a lightweight multi-node-ready k3s environment to provide a more realistic cloud-native telecom deployment model with:
+- separated RAN and Core workloads
+- lightweight Kubernetes cluster architecture
+- scalable service deployment
+- improved operational realism
+- future multi-node expansion capability
+
+Current architecture direction:
+- telecom-lab-Core → k3s control-plane / core services
+- telecom-lab-RAN → dedicated RAN node with C++ RAN simulator
+- future observability node → Prometheus / Grafana / Alertmanager
+
+---
+
 ## 🧱 Architecture Overview
 
 The system is composed of independent microservices deployed in a Kubernetes cluster:
 
-- **AMF** – Access & Mobility Management  
-- **SMF** – Session Management Function  
-- **AUSF** – Authentication Function  
-- **UDM** – Subscriber Data Management  
-- **PCF / PCRF** – Policy Control  
-- **OCS** – Online Charging System  
-- **AAA** – Legacy authentication flow (4G-style)  
-- **SMSC** – Messaging simulation  
-- **Redis** – Session/cache layer  
+- **AMF** – Access & Mobility Management 
+- **SMF** – Session Management Function 
+- **AUSF** – Authentication Function 
+- **UDM** – Subscriber Data Management 
+- **PCF / PCRF** – Policy Control 
+- **OCS** – Online Charging System 
+- **AAA** – Legacy authentication flow (4G-style) 
+- **SMSC** – Messaging simulation 
+- **Redis** – Session/cache layer 
 - **PostgreSQL** – Persistent subscriber and policy datastore (UDM backend)
 
 All services communicate over HTTP-based APIs and share state through Redis where applicable.
@@ -74,13 +92,60 @@ graph TD
 
 ---
 
+## Cloud-Native Deployment Architecture
+
+The project initially started on Minikube for fast local Kubernetes development and rapid service iteration.
+
+It has since been migrated to a lightweight k3s-based Kubernetes environment to provide a more realistic cloud-native telecom deployment model with:
+- separated RAN and Core workloads
+- lightweight multi-node Kubernetes architecture
+- scalable microservice deployment
+- improved operational realism
+- future multi-node expansion capability
+
+Current architecture direction:
+
+```text
+VM1 - telecom-lab-RAN
+└── k3s agent node
+    └── C++ RAN simulator
+
+VM2 - telecom-lab-Core
+└── k3s control-plane node
+    ├── AAA
+    ├── AUSF
+    ├── AMF
+    ├── SMF
+    ├── UDM
+    ├── PCRF / PCF
+    ├── OCS
+    ├── SMSC
+    ├── Redis
+    └── HAProxy
+
+Future VM3
+└── Observability node
+    ├── Prometheus
+    ├── Grafana
+    └── Alertmanager
+```
+
+The project initially started on Minikube for fast local Kubernetes development and was later migrated to k3s to provide a more realistic lightweight cloud-native telecom deployment model with:
+- separated RAN and Core workloads
+- lightweight multi-node Kubernetes architecture
+- scalable microservice deployment
+- Kubernetes-native service orchestration
+- future multi-node expansion capability
+
+---
+
 ## 🧩 Design Principles
 
-- Microservice isolation per network function  
-- Stateless service design where applicable  
-- Externalized session/state storage (Redis)  
-- Kubernetes-native deployment model  
-- Observable system behavior via metrics  
+- Microservice isolation per network function 
+- Stateless service design where applicable 
+- Externalized session/state storage (Redis) 
+- Kubernetes-native deployment model 
+- Observable system behavior via metrics 
 
 ---
 
@@ -106,7 +171,7 @@ This follows the 5G architecture principle where UDM acts as the centralized sub
 
 ### UE Registration (5G-style)
 
-AMF → AUSF → UDM → PostgreSQL → UDM → AMF  
+AMF → AUSF → UDM → PostgreSQL → UDM → AMF
 Authentication and subscriber validation flow using persistent subscriber data.
 
 UDM acts as the single source of truth for subscriber data, backed by PostgreSQL.
@@ -135,7 +200,7 @@ sequenceDiagram
 
 ### PDU Session Establishment
 
-AMF → SMF → PCF → UDM → PostgreSQL → PCF → SMF  
+AMF → SMF → PCF → UDM → PostgreSQL → PCF → SMF 
 Session creation with policy enforcement based on subscriber data.
 
 PCF retrieves policy decisions from UDM instead of using static logic, enabling dynamic policy enforcement.
@@ -172,8 +237,8 @@ sequenceDiagram
 
 ### End-to-End 5G Control-Plane Flow
 
-UE → AMF → AUSF → UDM → PostgreSQL  
-UE → AMF → SMF → PCF → UDM → PostgreSQL  
+UE → AMF → AUSF → UDM → PostgreSQL 
+UE → AMF → SMF → PCF → UDM → PostgreSQL 
 
 This diagram shows the combined authentication and policy-control path using UDM as the central subscriber data provider.
 
@@ -221,12 +286,12 @@ sequenceDiagram
 
 ### Charging Flow (Legacy AAA path)
 
-Client → AAA → UDM / PCRF / OCS → Redis  
+Client → AAA → UDM / PCRF / OCS → Redis 
 Authentication, policy assignment, and charging validation.
 
 ---
 
-## 🧪 Example Scenarios
+## Example Scenarios
 
 - UE registration via AMF with authentication through AUSF
 - PDU session creation with SMF orchestration
@@ -244,40 +309,40 @@ The system exposes metrics via Prometheus and visualizes them in Grafana.
 
 ### Key Metrics (AMF example)
 
-- `amf_registrations_total`  
-- `amf_pdu_sessions_created_total`  
-- `amf_auth_failures_total`  
-- `amf_errors_total`  
+- `amf_registrations_total` 
+- `amf_pdu_sessions_created_total` 
+- `amf_auth_failures_total` 
+- `amf_errors_total` 
 
 ### Dashboards
 
-- Registration and session rates  
-- Failure and error tracking  
-- System health overview  
-- Real-time service activity  
+- Registration and session rates
+- Failure and error tracking
+- System health overview
+- Real-time service activity
 
 ### Stack
 
-- Prometheus  
-- Grafana  
+- Prometheus
+- Grafana
 
 ---
 
-## ☸️ Kubernetes Deployment
+## Kubernetes Deployment
 
 Each service includes:
 
-- Deployment  
-- Service definition  
-- Health endpoints  
-- Liveness & readiness probes  
+- Deployment
+- Service definition
+- Health endpoints
+- Liveness & readiness probes
 
 Kubernetes provides:
 
-- Self-healing pods  
-- Rolling updates  
-- Service discovery  
-- Horizontal scaling capability  
+- Self-healing pods
+- Rolling updates
+- Service discovery
+- Horizontal scaling capability
 
 ---
 
@@ -285,10 +350,18 @@ Kubernetes provides:
 
 ### Start cluster
 
+## Kubernetes Environment
+
+Current platform:
+- k3s (primary deployment platform)
+
+Legacy development platform:
+- Minikube
 ```bash
 minikube start
 eval $(minikube docker-env)
 ```
+
 
 ### Build services
 ```bash
@@ -339,8 +412,8 @@ Grafana → http://localhost:3000
 
 ## 🔗 Current Control-Plane Data Flow
 
-AUSF → UDM → PostgreSQL  
-PCF  → UDM → PostgreSQL  
+AUSF → UDM → PostgreSQL 
+PCF  → UDM → PostgreSQL 
 
 UDM acts as the central data provider for subscriber and policy information across the system.
 
