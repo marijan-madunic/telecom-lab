@@ -112,13 +112,6 @@ Future VM3
     └── Alertmanager
 ```
 
-The project initially started on Minikube for fast local Kubernetes development and was later migrated to k3s to provide a more realistic lightweight cloud-native telecom deployment model with:
-- separated RAN and Core workloads
-- lightweight multi-node Kubernetes architecture
-- scalable microservice deployment
-- Kubernetes-native service orchestration
-- future multi-node expansion capability
-
 ---
 
 ## 🧩 Design Principles
@@ -152,8 +145,9 @@ This follows the 5G architecture principle where UDM acts as the centralized sub
 ## 🔄 Core Flows
 
 ### UE Registration (5G-style)
-
+```text
 AMF → AUSF → UDM → PostgreSQL → UDM → AMF
+```
 Authentication and subscriber validation flow using persistent subscriber data.
 
 UDM acts as the single source of truth for subscriber data, backed by PostgreSQL.
@@ -181,8 +175,9 @@ sequenceDiagram
 ---
 
 ### PDU Session Establishment
-
+```text
 AMF → SMF → PCF → UDM → PostgreSQL → PCF → SMF 
+```
 Session creation with policy enforcement based on subscriber data.
 
 PCF retrieves policy decisions from UDM instead of using static logic, enabling dynamic policy enforcement.
@@ -218,10 +213,10 @@ sequenceDiagram
 ---
 
 ### End-to-End 5G Control-Plane Flow
-
+```text
 UE → AMF → AUSF → UDM → PostgreSQL 
 UE → AMF → SMF → PCF → UDM → PostgreSQL 
-
+```
 This diagram shows the combined authentication and policy-control path using UDM as the central subscriber data provider.
 
 ```mermaid
@@ -267,8 +262,9 @@ sequenceDiagram
 ---
 
 ### Charging Flow (Legacy AAA path)
-
+```text
 Client → AAA → UDM / PCRF / OCS → Redis 
+```
 Authentication, policy assignment, and charging validation.
 
 ---
@@ -384,14 +380,15 @@ Grafana → http://localhost:3000
 - Centralized subscriber data model via UDM (source of truth pattern)
 - Service-to-service communication (AUSF/PCF → UDM)
 - Implementation of 5G-like control-plane interactions (AUSF/PCF/UDM) with centralized data model
+- HAProxy-based API gateway and load-balancing layer
 
 ---
 
 ## 🔗 Current Control-Plane Data Flow
-
+```text
 AUSF → UDM → PostgreSQL 
 PCF  → UDM → PostgreSQL 
-
+```
 UDM acts as the central data provider for subscriber and policy information across the system.
 
 ---
