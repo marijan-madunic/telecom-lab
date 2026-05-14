@@ -3,8 +3,13 @@
 ![Python](https://img.shields.io/badge/Python-3.x-blue)
 ![Flask](https://img.shields.io/badge/Flask-microservice-black)
 ![Docker](https://img.shields.io/badge/Docker-containerized-blue)
+![k3s](https://img.shields.io/badge/k3s-lightweight%20kubernetes-FFC61C)
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-orchestrated-326CE5)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-persistent%20datastore-336791)
 ![Redis](https://img.shields.io/badge/Redis-cache-red)
+![HAProxy](https://img.shields.io/badge/HAProxy-load%20balancer-106DA9)
+![Prometheus](https://img.shields.io/badge/Prometheus-monitoring-orange)
+![Grafana](https://img.shields.io/badge/Grafana-observability-F46800)
 
 ![GitHub repo size](https://img.shields.io/github/repo-size/marijan-madunic/telecom-lab)
 ![GitHub last commit](https://img.shields.io/github/last-commit/marijan-madunic/telecom-lab)
@@ -380,7 +385,7 @@ Grafana → http://localhost:3000
 - Centralized subscriber data model via UDM (source of truth pattern)
 - Service-to-service communication (AUSF/PCF → UDM)
 - Implementation of 5G-like control-plane interactions (AUSF/PCF/UDM) with centralized data model
-- HAProxy-based API gateway and load-balancing layer
+- HAProxy-based ingress and load-balancing layer
 
 ---
 
