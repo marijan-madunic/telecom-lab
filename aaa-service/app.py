@@ -52,6 +52,32 @@ DOWNGRADE = {
     "bronze": "bronze"
 }
 
+def request_diameter_policy_from_pcrf(imsi, plan, is_roaming=False):
+    ccr = {
+        "session_id": f"session-{imsi}",
+        "imsi": imsi,
+        "apn": "internet",
+        "qos_class": plan,
+        "requested_bandwidth": "100Mbps",
+        "roaming": is_roaming,
+        "diameter_command": "CCR",
+        "avp_mapping": {
+            "Session-Id": f"session-{imsi}",
+            "User-Name": imsi,
+            "Called-Station-Id": "internet",
+            "QoS-Class-Identifier": plan,
+            "APN-Aggregate-Max-Bitrate": "100Mbps"
+        }
+    }
+
+    response = requests.post(
+        f"{PCRF_URL}/diameter/ccr",
+        json=ccr,
+        timeout=2
+    )
+
+    return response.json()
+
 @app.route("/health")
 def health():
     return {"status": "ok"}, 200
@@ -111,6 +137,23 @@ def auth(imsi):
             except Exception as e:
                 logger.warning(f"PCRF request failed: {e}")
                 data["policy"] = "default"
+
+            # Diameter-inspired CCR/CCA policy exchange
+            try:
+                logger.info(f"Sending Diameter-inspired CCR to PCRF for IMSI {imsi}")
+                data["diameter_policy"] = request_diameter_policy_from_pcrf(
+                    imsi=imsi,
+                    plan=data["plan"],
+                    is_roaming=is_roaming
+                )
+
+            except Exception as e:
+                logger.warning(f"Diameter CCR request failed: {e}")
+                data["diameter_policy"] = {
+                    "result_code": 5005,
+                    "error": "diameter_policy_unavailable"
+                }
+
 
             #  spremi u cache (without balance!)
             cache_copy = data.copy()

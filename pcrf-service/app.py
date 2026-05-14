@@ -54,5 +54,42 @@ def policy(plan):
         logger.error(f"ERROR: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@app.route("/diameter/ccr", methods=["POST"])
+def diameter_ccr():
+    try:
+        ccr = request.json
+
+        imsi = ccr.get("imsi")
+        plan = ccr.get("qos_class", "bronze")
+        session_id = ccr.get("session_id")
+        requested_bandwidth = ccr.get("requested_bandwidth", "10Mbps")
+
+        logger.info(f"Diameter CCR received: IMSI={imsi}, plan={plan}, session={session_id}")
+
+        cca = {
+            "diameter_command": "CCA",
+            "session_id": session_id,
+            "result_code": 2001,
+            "policy_rule": f"internet-{plan}",
+            "granted_bandwidth": requested_bandwidth,
+            "avps": {
+                "Session-Id": session_id,
+                "Result-Code": 2001,
+                "Charging-Rule-Name": f"internet-{plan}",
+                "QoS-Class-Identifier": plan,
+                "APN-Aggregate-Max-Bitrate": requested_bandwidth
+            }
+        }
+
+        return jsonify(cca), 200
+
+    except Exception as e:
+        logger.error(f"Diameter CCR error: {str(e)}")
+        return jsonify({
+            "diameter_command": "CCA",
+            "result_code": 5005,
+            "error": str(e)
+        }), 500
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8081)
